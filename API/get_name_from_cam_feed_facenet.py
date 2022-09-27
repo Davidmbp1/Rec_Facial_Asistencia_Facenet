@@ -1,7 +1,7 @@
 from __future__ import print_function
 
 import keras
-import face_recognition
+#import face_recognition
 import numpy as np
 import cv2
 import queue
@@ -16,9 +16,14 @@ import os
 import sys
 import numpy as np
 
+#libreria para el audio
+#import pyttsx3
+
 from scipy.spatial.distance import cosine
 from keras.models import load_model
 from utils import *
+
+#os.add_dll_directory("C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v11.2/bin")
 
 # # bufferless VideoCapture
 # class VideoCapture:
@@ -272,7 +277,7 @@ def recognize(img,
 
                 # * ---------- SAVE data to send to the API -------- *
                 json_to_export['name'] = name
-                json_to_export['hour'] = f'{time.localtime().tm_hour}:{time.localtime().tm_min}'
+                json_to_export['hour'] = f'{time.localtime().tm_hour}:{time.localtime().tm_min}:{time.localtime().tm_sec}'
                 json_to_export['date'] = f'{time.localtime().tm_year}-{time.localtime().tm_mon}-{time.localtime().tm_mday}'
                 json_to_export['picture_array'] = img.tolist()
 
@@ -290,6 +295,8 @@ def recognize(img,
             cv2.rectangle(img, pt_1, pt_2, (0, 255, 0), 2)
             cv2.putText(img, name + f'__{distance:.2f}', (pt_1[0], pt_1[1] - 5), cv2.FONT_HERSHEY_SIMPLEX, 1,
                         (0, 255, 0), 2)
+
+
     return img
 
 ################# Fin del reconocimiento
@@ -331,11 +338,18 @@ if __name__ == '__main__':
     # get freshest frame, but never the same one twice (cnt increases)
     # see read() for details
     cnt = 0
+    upper_left = (630, 250)
+    bottom_right = (780, 600)
+
     while True:
         # test that this really takes NO time
         # (if it does, the camera is actually slower than this loop and we have to wait!)
         t0 = time.perf_counter()
         cnt, img = fresh.read(seqnumber=cnt + 1)
+
+        r = cv2.rectangle(img, upper_left, bottom_right, (0, 255, 255))
+        rect_img = img[upper_left[1]:bottom_right[1], upper_left[0]:bottom_right[0]]
+
         dt = time.perf_counter() - t0
         if dt > 0.010:  # 10 milliseconds
             print("NOTICE: read() took {dt:.3f} secs".format(dt=dt))
@@ -349,13 +363,18 @@ if __name__ == '__main__':
             cap = cv2.VideoCapture('rtsp://admin:Hik12345@192.168.0.100:554/Streaming/channels/101/')
             # vc = cv2.VideoCapture(0)
             cnt, img = fresh.read(seqnumber=cnt + 1)
+
+            r = cv2.rectangle(img, upper_left, bottom_right, (100, 50, 200))
+            rect_img = img[upper_left[1]:bottom_right[1], upper_left[0]:bottom_right[0]]
+
             dt = time.perf_counter() - t0
             if dt > 0.010:  # 10 milliseconds
                 print("NOTICE: read() took {dt:.3f} secs".format(dt=dt))
 
-        frame = recognize(img, face_detector, face_encoder, encoding_dict)
+        frame = recognize(rect_img, face_detector, face_encoder, encoding_dict)
 
-        cv2.imshow("realtime_1", frame)
+        img[upper_left[1]:bottom_right[1], upper_left[0]:bottom_right[0]]=frame
+        cv2.imshow("realtime_1", img)
         # this keeps both imshow windows updated during the wait (in particular the "realtime" one)
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break

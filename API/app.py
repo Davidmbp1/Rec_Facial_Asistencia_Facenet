@@ -6,6 +6,7 @@ import psycopg2
 import cv2
 import numpy as np
 import re
+import pyttsx3
 
 # Get the relativ path to this file (we will use it later)
 FILE_PATH = os.path.dirname(os.path.realpath(__file__))
@@ -26,7 +27,7 @@ def DATABASE_CONNECTION():
                             password="123456789",
                             host="localhost",
                             port="5432",
-                            database="postgres")
+                            database="Attendance_LAB_SC")
 
 
 # * --------------------  ROUTES ------------------- *
@@ -53,6 +54,22 @@ def get_receive_data():
             # If use is already in the DB for today:
             if result:
                 print('user IN')
+                # AUDIO  #######################################################
+
+                s = pyttsx3.init()
+                name = json_data['name']
+                data = "{}, Ya te vas mi rey?".format(name)
+                s.say(data)
+
+                rate = s.getProperty('rate')
+                s.setProperty('rate', 150)
+
+                s.runAndWait()
+
+                # finsh AUDIO###################################################
+
+
+
                 image_path = f"{FILE_PATH}/assets/img/{json_data['date']}/{json_data['name']}/departure.jpg"
 
                 # Save image
@@ -67,6 +84,22 @@ def get_receive_data():
             else:
                 print("user OUT")
                 # Save image
+
+                # AUDIO  #######################################################
+
+                s = pyttsx3.init()
+                name = json_data['name']
+                data = "Bienvenido {}, a Smart city".format(name)
+                s.say(data)
+
+                rate = s.getProperty('rate')
+                s.setProperty('rate', 150)
+
+                s.runAndWait()
+
+                # finsh AUDIO###################################################
+
+
                 image_path = f"{FILE_PATH}/assets/img/history/{json_data['date']}/{json_data['name']}/arrival.jpg"
                 os.makedirs(f"{FILE_PATH}/assets/img/history/{json_data['date']}/{json_data['name']}", exist_ok=True)
                 cv2.imwrite(image_path, np.array(json_data['picture_array']))

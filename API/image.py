@@ -128,61 +128,70 @@ if __name__ == '__main__':
     # these windows belong to the main thread
     #cv2.namedWindow("frame")
     # on win32, imshow from another thread to this DOES work
-    cv2.namedWindow("realtime")
+    # cv2.namedWindow("realtime")
 
     # open some camera
-    cap = cv2.VideoCapture('rtsp://admin:Hik12345@192.168.0.100:554/Streaming/channels/101/') # Cámara del labo
+    # cap = cv2.VideoCapture('rtsp://admin:Hik12345@192.168.0.100:554/Streaming/channels/101/') # Cámara del labo
     # cap = cv2.VideoCapture('rtsp://admin:Hik12345@192.168.20.116:554/Streaming/channels/101/') # Cámara de abajo
     # cap = cv2.VideoCapture(0) # Webcam
-    cap.set(cv2.CAP_PROP_FPS, 30)
+    cap = cv2.imread('C:/Users/Usuario/PycharmProjects/Face-recognition-project-master/API/assets/img/history/2022-9-27/Henrique De Aguiar/arrival.jpg')
+    # cap.set(cv2.CAP_PROP_FPS, 30)
 
-    # wrap it
-    fresh = FreshestFrame(cap)
+    IMG = recognize(cap, face_detector, face_encoder, encoding_dict)
 
-    # a way to watch the camera unthrottled
-    def callback(img):
-        cv2.imshow("realtime", img)
+    cv2.imwrite('prueba.png', IMG)
+    # cv2.imshow("realtime_1", IMG)
+
+    if cv2.waitKey(1) & 0xFF == ord('q'):
+        print("done!")
+
+    # # wrap it
+    # fresh = FreshestFrame(cap)
+    #
+    # # a way to watch the camera unthrottled
+    # def callback(img):
+    #     cv2.imshow("realtime", img)
 
 
     # main thread owns windows, does waitkey
 
-    fresh.callback = callback
+    # fresh.callback = callback
 
     # main loop
     # get freshest frame, but never the same one twice (cnt increases)
     # see read() for details
-    cnt = 0
-    while True:
-        # test that this really takes NO time
-        # (if it does, the camera is actually slower than this loop and we have to wait!)
-        t0 = time.perf_counter()
-        cnt, img = fresh.read(seqnumber=cnt + 1)
-        dt = time.perf_counter() - t0
-        if dt > 0.010:  # 10 milliseconds
-            print("NOTICE: read() took {dt:.3f} secs".format(dt=dt))
-
-        # let's pretend we need some time to process this frame
-        # print("processing {cnt}...".format(cnt=cnt), end=" ", flush=True)
-        resize = cv2.resize(img, (800, 600))
-
-        while cnt == False:
-            print("Can't receive frame. Retrying ...")
-            cap.release()
-            cap = cv2.VideoCapture('rtsp://admin:Hik12345@192.168.0.100:554/Streaming/channels/101/')
-            # vc = cv2.VideoCapture(0)
-            cnt, img = fresh.read(seqnumber=cnt + 1)
-            dt = time.perf_counter() - t0
-            if dt > 0.010:  # 10 milliseconds
-                print("NOTICE: read() took {dt:.3f} secs".format(dt=dt))
-            resize = cv2.resize(img, (800, 600))
-
-        frame = recognize(resize, face_detector, face_encoder, encoding_dict)
-
-        cv2.imshow("realtime_1", frame)
-        # this keeps both imshow windows updated during the wait (in particular the "realtime" one)
-        if cv2.waitKey(1) & 0xFF == ord('q'):
-            break
-
-        print("done!")
-
-    fresh.release()
+    # cnt = 0
+    # while True:
+    #     # test that this really takes NO time
+    #     # (if it does, the camera is actually slower than this loop and we have to wait!)
+    #     t0 = time.perf_counter()
+    #     cnt, img = fresh.read(seqnumber=cnt + 1)
+    #     dt = time.perf_counter() - t0
+    #     if dt > 0.010:  # 10 milliseconds
+    #         print("NOTICE: read() took {dt:.3f} secs".format(dt=dt))
+    #
+    #     # let's pretend we need some time to process this frame
+    #     # print("processing {cnt}...".format(cnt=cnt), end=" ", flush=True)
+    #     resize = cv2.resize(img, (800, 600))
+    #
+    #     while cnt == False:
+    #         print("Can't receive frame. Retrying ...")
+    #         cap.release()
+    #         cap = cv2.VideoCapture('rtsp://admin:Hik12345@192.168.0.100:554/Streaming/channels/101/')
+    #         # vc = cv2.VideoCapture(0)
+    #         cnt, img = fresh.read(seqnumber=cnt + 1)
+    #         dt = time.perf_counter() - t0
+    #         if dt > 0.010:  # 10 milliseconds
+    #             print("NOTICE: read() took {dt:.3f} secs".format(dt=dt))
+    #         resize = cv2.resize(img, (800, 600))
+    #
+    #     frame = recognize(resize, face_detector, face_encoder, encoding_dict)
+    #
+    #     cv2.imshow("realtime_1", frame)
+    #     # this keeps both imshow windows updated during the wait (in particular the "realtime" one)
+    #     if cv2.waitKey(1) & 0xFF == ord('q'):
+    #         break
+    #
+    #     print("done!")
+    #
+    # fresh.release()
