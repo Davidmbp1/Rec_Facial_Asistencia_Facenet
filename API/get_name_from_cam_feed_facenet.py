@@ -1,5 +1,6 @@
 from __future__ import print_function
 
+
 import keras
 #import face_recognition
 import numpy as np
@@ -12,9 +13,10 @@ import os
 import re
 import cv2
 import mtcnn
-import os
-import sys
-import numpy as np
+
+
+import win32com.client as wincl
+speak = wincl.Dispatch("SAPI.SpVoice")
 
 #libreria para el audio
 #import pyttsx3
@@ -252,7 +254,7 @@ def recognize(img,
               detector,
               encoder,
               encoding_dict,
-              recognition_t=0.4,
+              recognition_t=0.35,
               confidence_t=0.99,
               required_size=(160, 160), ):
     face_names = []
@@ -272,7 +274,7 @@ def recognize(img,
             if dist < recognition_t and dist < distance:
                 name = db_name
                 distance = dist
-
+                status = "0"
                 json_to_export = {}
 
                 # * ---------- SAVE data to send to the API -------- *
@@ -280,6 +282,7 @@ def recognize(img,
                 json_to_export['hour'] = f'{time.localtime().tm_hour}:{time.localtime().tm_min}:{time.localtime().tm_sec}'
                 json_to_export['date'] = f'{time.localtime().tm_year}-{time.localtime().tm_mon}-{time.localtime().tm_mday}'
                 json_to_export['picture_array'] = img.tolist()
+                json_to_export['status'] = status
 
                 # * ---------- SEND data to API --------- *
 
@@ -287,15 +290,24 @@ def recognize(img,
                 print("Status: ", r.status_code)
 
             face_names.append(name)
+            print(face_names)
 
         if name == 'unknown':
             cv2.rectangle(img, pt_1, pt_2, (0, 0, 255), 2)
             cv2.putText(img, name, pt_1, cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 1)
+
+            speak.Speak("Rostro no reconocido")
+
+            #engine = pyttsx3.init()
+            #voices = engine.getProperty('voices')
+            #engine.setProperty('voice', voices[1].id)
+            #engine.say("rostro no reconocido")
+            #engine.runAndWait()
+
         else:
             cv2.rectangle(img, pt_1, pt_2, (0, 255, 0), 2)
             cv2.putText(img, name + f'__{distance:.2f}', (pt_1[0], pt_1[1] - 5), cv2.FONT_HERSHEY_SIMPLEX, 1,
                         (0, 255, 0), 2)
-
 
     return img
 
@@ -317,9 +329,9 @@ if __name__ == '__main__':
     #cv2.namedWindow("realtime")
 
     # open some camera
-    cap = cv2.VideoCapture('rtsp://admin:Hik12345@192.168.0.100:554/Streaming/channels/101/')  # Cámara del labo
+    # cap = cv2.VideoCapture('rtsp://admin:Hik12345@192.168.0.101:554/Streaming/channels/101/')  # Cámara del labo
     # cap = cv2.VideoCapture('rtsp://admin:Hik12345@192.168.20.116:554/Streaming/channels/101/') # Cámara de abajo
-    # cap = cv2.VideoCapture(0)
+    cap = cv2.VideoCapture(0)
     cap.set(cv2.CAP_PROP_FPS, 20)
 
     # wrap it
@@ -338,8 +350,12 @@ if __name__ == '__main__':
     # get freshest frame, but never the same one twice (cnt increases)
     # see read() for details
     cnt = 0
-    upper_left = (630, 250)
-    bottom_right = (780, 600)
+
+    upper_left = (220, 140)
+    bottom_right = (520, 320)
+
+    # upper_left = (630, 250)
+    # bottom_right = (780, 500)
 
     while True:
         # test that this really takes NO time
@@ -351,8 +367,8 @@ if __name__ == '__main__':
         rect_img = img[upper_left[1]:bottom_right[1], upper_left[0]:bottom_right[0]]
 
         dt = time.perf_counter() - t0
-        if dt > 0.010:  # 10 milliseconds
-            print("NOTICE: read() took {dt:.3f} secs".format(dt=dt))
+        # if dt > 0.010:  # 10 milliseconds
+            # print("NOTICE: read() took {dt:.3f} secs".format(dt=dt))
 
         # let's pretend we need some time to process this frame
         # print("processing {cnt}...".format(cnt=cnt), end=" ", flush=True)
@@ -360,25 +376,25 @@ if __name__ == '__main__':
         while cnt == False:
             print("Can't receive frame. Retrying ...")
             cap.release()
-            cap = cv2.VideoCapture('rtsp://admin:Hik12345@192.168.0.100:554/Streaming/channels/101/')
-            # vc = cv2.VideoCapture(0)
+            # cap = cv2.VideoCapture('rtsp://admin:Hik12345@192.168.0.101:554/Streaming/channels/101/')
+            cap = cv2.VideoCapture(0)
             cnt, img = fresh.read(seqnumber=cnt + 1)
 
             r = cv2.rectangle(img, upper_left, bottom_right, (100, 50, 200))
             rect_img = img[upper_left[1]:bottom_right[1], upper_left[0]:bottom_right[0]]
 
             dt = time.perf_counter() - t0
-            if dt > 0.010:  # 10 milliseconds
-                print("NOTICE: read() took {dt:.3f} secs".format(dt=dt))
+            # if dt > 0.010:  # 10 milliseconds
+                # print("NOTICE: read() took {dt:.3f} secs".format(dt=dt))
 
         frame = recognize(rect_img, face_detector, face_encoder, encoding_dict)
-
+        time.sleep(0.1)
         img[upper_left[1]:bottom_right[1], upper_left[0]:bottom_right[0]]=frame
         cv2.imshow("realtime_1", img)
         # this keeps both imshow windows updated during the wait (in particular the "realtime" one)
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
 
-        print("done!")
+        # print("done!")
 
     fresh.release()

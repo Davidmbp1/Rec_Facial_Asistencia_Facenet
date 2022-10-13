@@ -87,7 +87,7 @@ def recognize(img,
               detector,
               encoder,
               encoding_dict,
-              recognition_t=0.45,
+              recognition_t=0.3,
               confidence_t=0.99,
               required_size=(160, 160), ):
     img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
